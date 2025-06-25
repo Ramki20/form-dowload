@@ -91,25 +91,27 @@ export class CMBSDocumentService {
     const url = window.URL.createObjectURL(blob);
     const link = window.document.createElement("a");
     link.href = url;
-    const fileNameWithExt = this.combineFilenameAndExtension(
+    link.download = this.combineFilenameAndExtension(
       documentName,
       documentExtension
     );
-    console.log("fileNameWithExt:", fileNameWithExt);
-    link.download = fileNameWithExt;
     document.body.appendChild(link);
     link.click();
     link.remove();
   }
 
   combineFilenameAndExtension(filename, extension) {
+    // Trim whitespace from both filename and extension
+    const cleanFilename = filename.trim();
+    const cleanExtension = extension.trim();
+
     // Check if the extension already has a period at the beginning.
-    if (extension.startsWith(".")) {
+    if (cleanExtension.startsWith(".")) {
       // If it does, just concatenate filename and extension.
-      return filename + extension;
+      return cleanFilename + cleanExtension;
     } else {
       // If not, add a period between filename and extension before concatenating.
-      return filename + "." + extension;
+      return cleanFilename + "." + cleanExtension;
     }
   }
 
