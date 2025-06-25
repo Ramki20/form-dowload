@@ -1,0 +1,79 @@
+<section class="creditonlineindicator-section">
+  <div class="fsa-grid__auto">
+    <h3>Package #{{this.applicationId}}</h3>
+    <table class="fsa-table">
+      <caption class="sr-only">
+      Credit Report Received
+      </caption>
+      <thead>
+      <tr>
+        <th style="width:322px">{{resources.labels.otherItems}}</th>
+        <th style="width:68px">{{resources.labels.received}}?</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr>
+        <td class="fsa-font--sans-bold fsa-table th:nth-child(1)">Credit report fee received online?</td>
+        <td class="fsa-text-align--left fsa-table th:nth-child(2)">{{resources.labels.no}}</td>
+      </tr>
+      </tbody>
+    </table>
+    <div *ngIf = "newDocsPresent == true" class="fsa-alert fsa-alert--info" role="alert">
+      <div class="fsa-alert__body">
+        <p class="fsa-alert__text">Applicant has submitted new documents</p>
+      </div>
+    </div>
+  </div>
+  </section>
+  <div class="fsa-grid__auto">
+    <div *ngFor="let table of tables" class="fsa-box fsa-box--br-0" style = "    margin-bottom: 30px;
+    ">
+      <div class="flex justify-between items-center mb-4">
+        <h3>{{table.tableName}}</h3>
+        <div class="add-document-btn">
+          <input placeholder="Choose a file" accept="image/png, image/jpeg, image/gif, application/pdf" multiple
+            class="fsa-input fsa-field__item" id="uploadexample02020" type="file" (change)="onFileSelected($event, table)"
+            value="" style="display: none;" />
+            <label for="uploadexample02020" class="fsa-btn fsa-btn--secondary addDocBtn">
+              Add document
+            </label>
+        </div>
+      </div>
+      <div class="fsa-m--xxs">
+        <table class="fsa-table fsa-table--borderless" aria-label="Document Details">
+          <thead>
+            <tr>
+              <th class="fsa-table th:nth-child(1)">{{resources.labels.documents}}</th>
+              <th class="fsa-table th:nth-child(2)">{{resources.labels.dateReceived}}</th>
+              <th class="fsa-table th:nth-child(3)">{{resources.labels.source}}</th>
+              <th class="fsa-table th:nth-child(4)">{{resources.labels.actions}}</th>
+
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let doc of table.olaDocument">
+              <td>{{ doc.documentName + doc.documentExtension}}
+                <span *ngIf = "doc.isNew == true" class="fsa-label fsa-label--warning" style = "float:right" >{{resources.labels.new}}</span></td>
+              <td>{{ doc.documentDate | date: 'MM/dd/yyyy' }}</td>
+              <td>{{ doc.documentSource }}</td>
+              <td>
+                <a href="javascript:void(0)"
+                (click)="handleDocumentAction(doc, table)"
+                class="fsa-link">
+               {{isPdf(doc.documentExtension) ? 'Download' : 'Download'}}
+             </a>
+           </td>
+         </tr>
+       </tbody>
+          <div *ngIf="table.tableName == 'Farm Operating Plan'" class="fsa-alert fsa-alert--info" role="alert">
+            <div class="fsa-alert__body">
+              <p class="fsa-alert__text">Applicant has requested assistance with Farm Operating Plan</p>
+            </div>
+          </div>
+        </table>
+      </div>
+    </div>
+
+    <!-- Submit to FBP -->
+    <app-submit-to-fbp *ngIf="tables.length"></app-submit-to-fbp>
+    </div>

@@ -1,0 +1,87 @@
+.flex {
+  display: flex;
+}
+.justify-between {
+  justify-content: space-between;
+}
+.items-center {
+  align-items: center;
+}
+.mb-4 {
+  margin-bottom: 1rem;
+}
+.addDocBtnTxt{
+  display: flex;
+  border: 1px solid gray;
+  width: fit-content;
+  margin-bottom: -2.0rem;
+}
+
+.addDocBtn {
+  margin: 10px;
+}
+
+.addDocTxt {
+  margin-right: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.fileName {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.fileNameHeader,
+.fileNameBody,
+.fileNameData {
+  width: auto;
+}
+
+.modifiedHeader,
+.fileModBody,
+.modifiedData {
+  width: 110px;
+}
+
+.actionsHeader,
+.fileActionsBody,
+.actionsData {
+  width: 80px;
+}
+
+
+
+.file-list{
+  display: block;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.fsa-table {
+  width: 100%;
+  ;
+}
+
+
+.fsa-table th:nth-child(1),
+.fsa-table td:nth-child(1) {
+  width: 720px;
+}
+
+.fsa-table th:nth-child(2),
+.fsa-table td:nth-child(2) {
+  width: 20%;
+}
+
+.fsa-table th:nth-child(3),
+.fsa-table td:nth-child(3) {
+  width: 25%;
+}
+
+.fsa-table th:nth-child(4),
+.fsa-table td:nth-child(4) {
+  width: 10%;
+}

@@ -1,0 +1,89 @@
+<div *ngIf="tableData$ | async as tableData">
+  <!-- Loading state for entire component -->
+  <div *ngIf="tableData.isLoading" class="fsa-loading">
+    <span class="fsa-spinner"></span>
+    Loading summary cards...
+  </div>
+
+  <!-- Summary Cards -->
+  <div
+    *ngFor="let item of tableData.loans"
+    class="table-padding fsa-box fsa-box--bg-3"
+  >
+    <table class="summary-table" aria-label="Loan Summary">
+      <thead class="summary-title">
+        <tr>
+          <th colspan="2">Loan Summary - DLS | Special Servicing</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="summary-tr">
+          <td class="summary-bold">Fund Code / Loan Number</td>
+          <td>
+            {{ item.loanData.loan.fundCode }}-{{
+              item.loanData.loan.loanNumber
+            }}
+          </td>
+        </tr>
+        <tr class="summary-tr">
+          <td colspan="2"><div class="fsa-divider"></div></td>
+        </tr>
+        <tr class="summary-tr">
+          <td class="summary-bold">Set-Aside Type</td>
+          <td>{{ item.loanData.setAsideRequest?.set_asd_type_cd || "N/A" }}</td>
+        </tr>
+        <tr class="summary-tr">
+          <td colspan="2"><div class="fsa-divider"></div></td>
+        </tr>
+        <tr class="summary-tr">
+          <td class="summary-bold">Disaster Designation Code</td>
+          <td>{{ item.loanData.setAsideRequest?.dstr_dsgt_cd || "N/A" }}</td>
+        </tr>
+        <tr class="summary-tr">
+          <td colspan="2"><div class="fsa-divider"></div></td>
+        </tr>
+        <tr class="summary-tr">
+          <td class="summary-bold">Installment Date</td>
+          <td>
+            {{
+              (item.loanData.setAsideRequest?.istl_dt | date : "MM/dd/yyyy") ||
+                "N/A"
+            }}
+          </td>
+        </tr>
+        <tr class="summary-tr">
+          <td colspan="2"><div class="fsa-divider"></div></td>
+        </tr>
+        <tr class="summary-tr">
+          <td class="summary-button">
+            <button
+              class="fsa-btn fsa-btn--primary fsa-btn--loading"
+              type="button"
+              (click)="showFSA2501Form(item.loanData)"
+            >
+              <span class="fsa-btn__content"> FSA-2501 Form </span>
+            </button>
+            &nbsp; &nbsp; &nbsp;
+            <button
+              class="fsa-btn fsa-btn--tertiary fsa-btn--loading"
+              type="button"
+              [disabled]="deletingIds.has(item.loanData.loan.id)"
+              (click)="deleteSelection(item.loanData.loan.id)"
+            >
+              <span class="fsa-btn__content">
+                <span *ngIf="!deletingIds.has(item.loanData.loan.id)"
+                  >Delete</span
+                >
+                <span
+                  *ngIf="deletingIds.has(item.loanData.loan.id)"
+                  class="fsa-spinner"
+                ></span>
+              </span>
+            </button>
+          </td>
+          <td></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
