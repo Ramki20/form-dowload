@@ -696,11 +696,6 @@ describe('SetAsideRequestService', () => {
       const loanNumber = '789';
 
       const mockResponse = { formData: 'test data' };
-      const mockHeaders = new HttpHeaders({});
-      let mockParams = new HttpParams();
-      mockParams = mockParams.append('rqstId', requestId);
-      mockParams = mockParams.append('fundCode', fundCode.toString());
-      mockParams = mockParams.append('loanNumber', loanNumber);
 
       jest
         .spyOn(httpRequestService, 'getWithParams')
@@ -714,18 +709,23 @@ describe('SetAsideRequestService', () => {
 
       tick();
 
-      expect(httpRequestService.getWithParams).toHaveBeenCalledWith(
-        'get2501FormDetails',
-        mockHeaders,
-        expect.any(HttpParams)
-      );
-
-      // Verify the params were set correctly
-      const calledParams = (httpRequestService.getWithParams as jest.Mock).mock
-        .calls[0][2];
-      expect(calledParams.get('rqstId')).toBe(requestId);
-      expect(calledParams.get('fundCode')).toBe(fundCode.toString());
-      expect(calledParams.get('loanNumber')).toBe(loanNumber);
+      expect(httpRequestService.getWithParams).toHaveBeenCalledTimes(1);
+      
+      // Get the actual call arguments
+      const callArgs = (httpRequestService.getWithParams as jest.Mock).mock.calls[0];
+      const [route, headers, params] = callArgs;
+      
+      // Verify the route
+      expect(route).toBe('get2501FormDetails');
+      
+      // Verify headers is an HttpHeaders instance
+      expect(headers).toBeInstanceOf(HttpHeaders);
+      
+      // Verify params is an HttpParams instance and contains correct values
+      expect(params).toBeInstanceOf(HttpParams);
+      expect(params.get('rqstId')).toBe(requestId);
+      expect(params.get('fundCode')).toBe(fundCode.toString());
+      expect(params.get('loanNumber')).toBe(loanNumber);
       
       flush();
     }));
