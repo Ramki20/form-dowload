@@ -1,4 +1,8 @@
-import { HttpErrorResponse } from '@angular/common/http';
+import {
+  HttpErrorResponse,
+  HttpHeaders,
+  HttpParams,
+} from '@angular/common/http';
 import { HttpTestingController } from '@angular/common/http/testing';
 import { fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import {
@@ -340,5 +344,477 @@ describe('SetAsideRequestService', () => {
       );
       flush();
     }));
+  });
+
+  describe('processSetAsideForLoan', () => {
+    it('should call http.post with correct parameters and return ProcessSetAsideForLoanData', () => {
+      const mockRequest = {
+        coreCustomerID: 12345,
+        loanID: 67890,
+        userIdentity: 'testUser',
+        disasterDesignationCode: 'DST001',
+        effectiveDate: '2024-01-01',
+        installmentDate: '2024-02-01',
+        installmentSetAsideAmount: 1000.0,
+        paymentsAfterInstallmentDateAmount: 500.0,
+      };
+
+      const mockResponse = {
+        success: true,
+        message: 'Set aside processed successfully',
+      };
+
+      service
+        .processSetAsideForLoan(
+          mockRequest.coreCustomerID,
+          mockRequest.loanID,
+          mockRequest.userIdentity,
+          mockRequest.disasterDesignationCode,
+          mockRequest.effectiveDate,
+          mockRequest.installmentDate,
+          mockRequest.installmentSetAsideAmount,
+          mockRequest.paymentsAfterInstallmentDateAmount
+        )
+        .subscribe((response) => {
+          expect(response).toEqual(mockResponse);
+        });
+
+      const req = httpMock.expectOne(service.processSetAsideForLoanUrl);
+      expect(req.request.method).toBe('POST');
+      expect(JSON.parse(req.request.body)).toEqual(mockRequest);
+      req.flush(mockResponse);
+    });
+
+    it('should handle error in processSetAsideForLoan', () => {
+      const errorResponse = {
+        status: 500,
+        statusText: 'Internal Server Error',
+      };
+
+      service
+        .processSetAsideForLoan(
+          12345,
+          67890,
+          'testUser',
+          'DST001',
+          '2024-01-01',
+          '2024-02-01',
+          1000.0,
+          500.0
+        )
+        .subscribe({
+          next: () => fail('Expected an error'),
+          error: (error) => {
+            expect(error.status).toBe(500);
+          },
+        });
+
+      const req = httpMock.expectOne(service.processSetAsideForLoanUrl);
+      req.flush('Error occurred', errorResponse);
+    });
+  });
+
+  describe('saveSetAsideConfirmation', () => {
+    it('should call http.post with correct parameters and return confirmation response', () => {
+      const requestId = 123;
+      const confirmationNumber = 'CONF456';
+      const eAuthId = 'AUTH789';
+
+      const mockRequest = {
+        requestId,
+        confirmationNumber,
+        eAuthId,
+      };
+
+      const mockResponse = {
+        success: true,
+        confirmationId: 'CONF456',
+      };
+
+      service
+        .saveSetAsideConfirmation(requestId, confirmationNumber, eAuthId)
+        .subscribe((response) => {
+          expect(response).toEqual(mockResponse);
+        });
+
+      const req = httpMock.expectOne(service.saveSetAsideConfirmationUrl);
+      expect(req.request.method).toBe('POST');
+      expect(JSON.parse(req.request.body)).toEqual(mockRequest);
+      req.flush(mockResponse);
+    });
+
+    it('should handle error in saveSetAsideConfirmation', () => {
+      const errorResponse = { status: 400, statusText: 'Bad Request' };
+
+      service.saveSetAsideConfirmation(123, 'CONF456', 'AUTH789').subscribe({
+        next: () => fail('Expected an error'),
+        error: (error) => {
+          expect(error.status).toBe(400);
+        },
+      });
+
+      const req = httpMock.expectOne(service.saveSetAsideConfirmationUrl);
+      req.flush('Invalid request', errorResponse);
+    });
+  });
+
+  describe('saveSetAsideRequest2', () => {
+    it('should save set aside request using new schema and return response', async () => {
+      const mockRequestData: SetAsideRequestData2 = {
+        rqst_id: 1,
+        loan_id: 1,
+        task_id: 1,
+        addm_dt: new Date('2024-01-01'),
+        dstr_dsgt_cd: 'M123',
+        set_asd_type_cd: 'DSA',
+        eff_dt: new Date('2024-01-01'),
+        istl_dt: new Date('2025-01-01'),
+        istl_set_asd_amt: 125.0,
+        istl_paid_amt: 4589.0,
+        eauth_id: '12485656',
+        flpCustomerId: 1,
+        caseNumber: 1,
+        fundCode: 1,
+        lastCashCreditDate: new Date('2024-01-01'),
+        loanAmount: 1,
+        loanClosingDate: '2024-01-01',
+        loanExpirationDate: new Date('2024-01-01'),
+        loanNumber: '1',
+        loanRelationshipTypeCode: 'P',
+        loanType: 'P',
+        loanWriteOffDescription: 'string',
+        nextInstallmentAmount: 1,
+        totalLoanScheduledAmount: 1,
+        totalUnpaidInterestAmount: 1,
+        unpaidPrincipalAmount: 1,
+        unpaidInterestAmount: 1,
+      };
+
+      const mockResponse = { success: true, requestId: 1 };
+      const consoleSpy = jest.spyOn(console, 'log');
+
+      jest.spyOn(httpRequestService, 'post').mockResolvedValue(mockResponse);
+
+      const result = await service.saveSetAsideRequest2(mockRequestData);
+
+      expect(httpRequestService.post).toHaveBeenCalledWith(
+        'setAsideRequestParent',
+        mockRequestData
+      );
+      expect(consoleSpy).toHaveBeenCalledWith(
+        'Sending setAsideRequestData: ',
+        JSON.stringify(mockRequestData, null, 2)
+      );
+      expect(consoleSpy).toHaveBeenCalledWith(
+        'SetAsideRequestResponse after saving in DB: ',
+        JSON.stringify(mockResponse, null, 2)
+      );
+      expect(result).toEqual(mockResponse);
+    });
+
+    it('should handle error in saveSetAsideRequest2 and return null', async () => {
+      const mockRequestData: SetAsideRequestData2 = {
+        rqst_id: 1,
+        loan_id: 1,
+        task_id: 1,
+        addm_dt: new Date('2024-01-01'),
+        dstr_dsgt_cd: 'M123',
+        set_asd_type_cd: 'DSA',
+        eff_dt: new Date('2024-01-01'),
+        istl_dt: new Date('2025-01-01'),
+        istl_set_asd_amt: 125.0,
+        istl_paid_amt: 4589.0,
+        eauth_id: '12485656',
+        flpCustomerId: 1,
+        caseNumber: 1,
+        fundCode: 1,
+        lastCashCreditDate: new Date('2024-01-01'),
+        loanAmount: 1,
+        loanClosingDate: '2024-01-01',
+        loanExpirationDate: new Date('2024-01-01'),
+        loanNumber: '1',
+        loanRelationshipTypeCode: 'P',
+        loanType: 'P',
+        loanWriteOffDescription: 'string',
+        nextInstallmentAmount: 1,
+        totalLoanScheduledAmount: 1,
+        totalUnpaidInterestAmount: 1,
+        unpaidPrincipalAmount: 1,
+        unpaidInterestAmount: 1,
+      };
+
+      const mockError = new Error('Save failed');
+      const errorSpy = jest.spyOn(console, 'error');
+
+      jest.spyOn(httpRequestService, 'post').mockRejectedValue(mockError);
+
+      const result = await service.saveSetAsideRequest2(mockRequestData);
+
+      expect(httpRequestService.post).toHaveBeenCalledWith(
+        'setAsideRequestParent',
+        mockRequestData
+      );
+      expect(errorSpy).toHaveBeenCalledWith(
+        'Error saving set-aside request:',
+        mockError
+      );
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('setAsideTrans', () => {
+    it('should call http.post with correct parameters for setAsideTrans', () => {
+      const taskId = 123;
+      const loanId = 456;
+      const confirmationNumber = 'CONF789';
+      const eAuthId = 'AUTH123';
+
+      const expectedPayload = {
+        taskId,
+        loanId,
+        confirmationNumber,
+        eAuthId,
+      };
+
+      const mockResponse = { success: true };
+
+      service
+        .setAsideTrans(taskId, loanId, confirmationNumber, eAuthId)
+        .subscribe((response) => {
+          expect(response).toEqual(mockResponse);
+        });
+
+      const req = httpMock.expectOne(service.setAsideTransUrl);
+      expect(req.request.method).toBe('POST');
+      expect(JSON.parse(req.request.body)).toEqual(expectedPayload);
+      req.flush(mockResponse);
+    });
+
+    it('should handle error in setAsideTrans', () => {
+      const errorResponse = {
+        status: 500,
+        statusText: 'Internal Server Error',
+      };
+
+      service.setAsideTrans(123, 456, 'CONF789', 'AUTH123').subscribe({
+        next: () => fail('Expected an error'),
+        error: (error) => {
+          expect(error.status).toBe(500);
+        },
+      });
+
+      const req = httpMock.expectOne(service.setAsideTransUrl);
+      req.flush('Error occurred', errorResponse);
+    });
+  });
+
+  describe('setAsideRequestOutcome', () => {
+    const mockOutcomeData: SetAsideRequestOutcomeData = {
+      fund_cd: 'FC',
+      loan_nbr: '123456',
+      orgn_loan_dt: new Date('2024-01-01'),
+      unpd_prn: 10000,
+      unpd_int: 500,
+      note_int_rt: 3.5,
+      acru_int_amt: 200,
+      non_cptl_int_istl_amt: 100,
+      dfr_non_cptl_int_istl_amt: 50,
+      dfr_int_istl_amt: 50,
+      set_asd_int_amt: 0,
+      set_asd_prn_amt: 0,
+      set_asd_non_cptl_amt: 0,
+      set_asd_dfr_non_cptl_amt: 0,
+      set_asd_dfr_amt: 0,
+      dir_loan_type_cd: 'FO',
+      cre_user_nm: '12485656',
+    };
+
+    it('should call http.post with useSetAsideSchema=Y when flag is true', () => {
+      const mockResponse = { success: true };
+
+      service
+        .setAsideRequestOutcome(mockOutcomeData, true)
+        .subscribe((response) => {
+          expect(response).toEqual(mockResponse);
+        });
+
+      const req = httpMock.expectOne(
+        `${service.setAsideRequestOutcomeUrl}?useSetAsideSchema=Y`
+      );
+      expect(req.request.method).toBe('POST');
+      expect(JSON.parse(req.request.body)).toEqual(mockOutcomeData);
+      req.flush(mockResponse);
+    });
+
+    it('should call http.post without query parameter when flag is false', () => {
+      const mockResponse = { success: true };
+
+      service
+        .setAsideRequestOutcome(mockOutcomeData, false)
+        .subscribe((response) => {
+          expect(response).toEqual(mockResponse);
+        });
+
+      const req = httpMock.expectOne(service.setAsideRequestOutcomeUrl);
+      expect(req.request.method).toBe('POST');
+      expect(JSON.parse(req.request.body)).toEqual(mockOutcomeData);
+      req.flush(mockResponse);
+    });
+
+    it('should handle error in setAsideRequestOutcome', () => {
+      const errorResponse = { status: 422, statusText: 'Unprocessable Entity' };
+
+      service.setAsideRequestOutcome(mockOutcomeData, false).subscribe({
+        next: () => fail('Expected an error'),
+        error: (error) => {
+          expect(error.status).toBe(422);
+        },
+      });
+
+      const req = httpMock.expectOne(service.setAsideRequestOutcomeUrl);
+      req.flush('Validation error', errorResponse);
+    });
+  });
+
+  describe('fetchFSA2501FormData', () => {
+    it('should call httpRequestService.getWithParams with correct parameters', () => {
+      const requestId = '123';
+      const fundCode = 456;
+      const loanNumber = '789';
+
+      const mockResponse = { formData: 'test data' };
+      const mockHeaders = new HttpHeaders({});
+      let mockParams = new HttpParams();
+      mockParams = mockParams.append('rqstId', requestId);
+      mockParams = mockParams.append('fundCode', fundCode.toString());
+      mockParams = mockParams.append('loanNumber', loanNumber);
+
+      jest
+        .spyOn(httpRequestService, 'getWithParams')
+        .mockReturnValue(Promise.resolve(mockResponse) as any);
+
+      service
+        .fetchFSA2501FormData(requestId, fundCode, loanNumber)
+        .subscribe((response) => {
+          expect(response).toEqual(mockResponse);
+        });
+
+      expect(httpRequestService.getWithParams).toHaveBeenCalledWith(
+        'get2501FormDetails',
+        mockHeaders,
+        expect.any(HttpParams)
+      );
+
+      // Verify the params were set correctly
+      const calledParams = (httpRequestService.getWithParams as jest.Mock).mock
+        .calls[0][2];
+      expect(calledParams.get('rqstId')).toBe(requestId);
+      expect(calledParams.get('fundCode')).toBe(fundCode.toString());
+      expect(calledParams.get('loanNumber')).toBe(loanNumber);
+    });
+
+    it('should handle error in fetchFSA2501FormData', fakeAsync(() => {
+      const requestId = '123';
+      const fundCode = 456;
+      const loanNumber = '789';
+
+      const mockError = new Error('Fetch error');
+
+      jest
+        .spyOn(httpRequestService, 'getWithParams')
+        .mockReturnValue(Promise.reject(mockError) as any);
+
+      let error: any;
+      service.fetchFSA2501FormData(requestId, fundCode, loanNumber).subscribe({
+        next: () => fail('Expected an error'),
+        error: (err) => {
+          error = err;
+        },
+      });
+
+      tick();
+      expect(error).toBe(mockError);
+      flush();
+    }));
+  });
+
+  // Additional test for edge cases in prepareSetAsideRequestOutcomeData
+  describe('prepareSetAsideRequestOutcomeData - Edge Cases', () => {
+    it('should handle zero set aside amount', () => {
+      const testData: SetAsideRequestCompleteData = {
+        setAsideRequestData: {
+          ...jestRequestData,
+          istl_set_asd_amt: 0,
+        },
+        setAsideRequestOutcomeData: {
+          ...mockSetAsideRequestCompleteData.setAsideRequestOutcomeData,
+          non_cptl_int_istl_amt: 100,
+          dfr_non_cptl_int_istl_amt: 50,
+          dfr_int_istl_amt: 25,
+          acru_int_amt: 75,
+        },
+      };
+
+      const consoleSpy = jest.spyOn(console, 'log');
+      service.testPrepareSetAsideRequestOutcomeData(testData);
+
+      expect(testData.setAsideRequestOutcomeData.set_asd_prn_amt).toBe(0);
+      expect(testData.setAsideRequestOutcomeData.set_asd_non_cptl_amt).toBe(0);
+      expect(testData.setAsideRequestOutcomeData.set_asd_int_amt).toBe(0);
+      expect(testData.setAsideRequestOutcomeData.set_asd_dfr_non_cptl_amt).toBe(
+        0
+      );
+      expect(testData.setAsideRequestOutcomeData.set_asd_dfr_amt).toBe(0);
+    });
+
+    it('should handle set aside amount with commas in string format', () => {
+      const testData: SetAsideRequestCompleteData = {
+        setAsideRequestData: {
+          ...jestRequestData,
+          istl_set_asd_amt: '1,000.50' as any, // Simulating string with commas
+        },
+        setAsideRequestOutcomeData: {
+          ...mockSetAsideRequestCompleteData.setAsideRequestOutcomeData,
+          non_cptl_int_istl_amt: 100,
+          dfr_non_cptl_int_istl_amt: 50,
+          dfr_int_istl_amt: 25,
+          acru_int_amt: 75,
+        },
+      };
+
+      const consoleSpy = jest.spyOn(console, 'log');
+      service.testPrepareSetAsideRequestOutcomeData(testData);
+
+      // Should parse the comma-separated string correctly
+      expect(consoleSpy).toHaveBeenCalledWith('setAsideAmount: After', 1000.5);
+    });
+
+    it('should handle large set aside amount that covers all categories with remainder', () => {
+      const testData: SetAsideRequestCompleteData = {
+        setAsideRequestData: {
+          ...jestRequestData,
+          istl_set_asd_amt: 10000,
+        },
+        setAsideRequestOutcomeData: {
+          ...mockSetAsideRequestCompleteData.setAsideRequestOutcomeData,
+          non_cptl_int_istl_amt: 100,
+          dfr_non_cptl_int_istl_amt: 50,
+          dfr_int_istl_amt: 25,
+          acru_int_amt: 75,
+        },
+      };
+
+      service.testPrepareSetAsideRequestOutcomeData(testData);
+
+      expect(testData.setAsideRequestOutcomeData.set_asd_non_cptl_amt).toBe(
+        100
+      );
+      expect(testData.setAsideRequestOutcomeData.set_asd_dfr_non_cptl_amt).toBe(
+        50
+      );
+      expect(testData.setAsideRequestOutcomeData.set_asd_dfr_amt).toBe(25);
+      expect(testData.setAsideRequestOutcomeData.set_asd_int_amt).toBe(75);
+      expect(testData.setAsideRequestOutcomeData.set_asd_prn_amt).toBe(9750); // 10000 - 250
+    });
   });
 });
