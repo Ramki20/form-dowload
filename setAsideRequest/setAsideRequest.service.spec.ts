@@ -18,6 +18,7 @@ import {
   SetAsideOutcomeResponse,
   SetAsideRequestData2,
 } from '../../interfaces/pre-close.model';
+import { from } from 'rxjs';
 
 const SECONDS = 1000;
 jest.setTimeout(70 * SECONDS);
@@ -642,7 +643,13 @@ describe('SetAsideRequestService', () => {
         `${service.setAsideRequestOutcomeUrl}?useSetAsideSchema=Y`
       );
       expect(req.request.method).toBe('POST');
-      expect(JSON.parse(req.request.body)).toEqual(mockOutcomeData);
+      
+      // When JSON.stringify is called on the Date object, it becomes an ISO string
+      const expectedBody = {
+        ...mockOutcomeData,
+        orgn_loan_dt: mockOutcomeData.orgn_loan_dt.toISOString()
+      };
+      expect(JSON.parse(req.request.body)).toEqual(expectedBody);
       req.flush(mockResponse);
     });
 
@@ -657,7 +664,13 @@ describe('SetAsideRequestService', () => {
 
       const req = httpMock.expectOne(service.setAsideRequestOutcomeUrl);
       expect(req.request.method).toBe('POST');
-      expect(JSON.parse(req.request.body)).toEqual(mockOutcomeData);
+      
+      // When JSON.stringify is called on the Date object, it becomes an ISO string
+      const expectedBody = {
+        ...mockOutcomeData,
+        orgn_loan_dt: mockOutcomeData.orgn_loan_dt.toISOString()
+      };
+      expect(JSON.parse(req.request.body)).toEqual(expectedBody);
       req.flush(mockResponse);
     });
 
@@ -677,7 +690,7 @@ describe('SetAsideRequestService', () => {
   });
 
   describe('fetchFSA2501FormData', () => {
-    it('should call httpRequestService.getWithParams with correct parameters', () => {
+    it('should call httpRequestService.getWithParams with correct parameters', fakeAsync(() => {
       const requestId = '123';
       const fundCode = 456;
       const loanNumber = '789';
@@ -691,13 +704,15 @@ describe('SetAsideRequestService', () => {
 
       jest
         .spyOn(httpRequestService, 'getWithParams')
-        .mockReturnValue(Promise.resolve(mockResponse) as any);
+        .mockReturnValue(from(Promise.resolve(mockResponse)));
 
       service
         .fetchFSA2501FormData(requestId, fundCode, loanNumber)
         .subscribe((response) => {
           expect(response).toEqual(mockResponse);
         });
+
+      tick();
 
       expect(httpRequestService.getWithParams).toHaveBeenCalledWith(
         'get2501FormDetails',
@@ -711,7 +726,9 @@ describe('SetAsideRequestService', () => {
       expect(calledParams.get('rqstId')).toBe(requestId);
       expect(calledParams.get('fundCode')).toBe(fundCode.toString());
       expect(calledParams.get('loanNumber')).toBe(loanNumber);
-    });
+      
+      flush();
+    }));
 
     it('should handle error in fetchFSA2501FormData', fakeAsync(() => {
       const requestId = '123';
@@ -722,7 +739,7 @@ describe('SetAsideRequestService', () => {
 
       jest
         .spyOn(httpRequestService, 'getWithParams')
-        .mockReturnValue(Promise.reject(mockError) as any);
+        .mockReturnValue(from(Promise.reject(mockError)));
 
       let error: any;
       service.fetchFSA2501FormData(requestId, fundCode, loanNumber).subscribe({
