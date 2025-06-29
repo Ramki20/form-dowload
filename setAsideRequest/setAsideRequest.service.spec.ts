@@ -643,11 +643,11 @@ describe('SetAsideRequestService', () => {
         `${service.setAsideRequestOutcomeUrl}?useSetAsideSchema=Y`
       );
       expect(req.request.method).toBe('POST');
-      
+
       // When JSON.stringify is called on the Date object, it becomes an ISO string
       const expectedBody = {
         ...mockOutcomeData,
-        orgn_loan_dt: mockOutcomeData.orgn_loan_dt.toISOString()
+        orgn_loan_dt: mockOutcomeData.orgn_loan_dt.toISOString(),
       };
       expect(JSON.parse(req.request.body)).toEqual(expectedBody);
       req.flush(mockResponse);
@@ -664,11 +664,11 @@ describe('SetAsideRequestService', () => {
 
       const req = httpMock.expectOne(service.setAsideRequestOutcomeUrl);
       expect(req.request.method).toBe('POST');
-      
+
       // When JSON.stringify is called on the Date object, it becomes an ISO string
       const expectedBody = {
         ...mockOutcomeData,
-        orgn_loan_dt: mockOutcomeData.orgn_loan_dt.toISOString()
+        orgn_loan_dt: mockOutcomeData.orgn_loan_dt.toISOString(),
       };
       expect(JSON.parse(req.request.body)).toEqual(expectedBody);
       req.flush(mockResponse);
@@ -710,23 +710,24 @@ describe('SetAsideRequestService', () => {
       tick();
 
       expect(httpRequestService.getWithParams).toHaveBeenCalledTimes(1);
-      
+
       // Get the actual call arguments
-      const callArgs = (httpRequestService.getWithParams as jest.Mock).mock.calls[0];
+      const callArgs = (httpRequestService.getWithParams as jest.Mock).mock
+        .calls[0];
       const [route, headers, params] = callArgs;
-      
+
       // Verify the route
       expect(route).toBe('get2501FormDetails');
-      
+
       // Verify headers is an HttpHeaders instance
       expect(headers).toBeInstanceOf(HttpHeaders);
-      
+
       // Verify params is an HttpParams instance and contains correct values
       expect(params).toBeInstanceOf(HttpParams);
       expect(params.get('rqstId')).toBe(requestId);
       expect(params.get('fundCode')).toBe(fundCode.toString());
       expect(params.get('loanNumber')).toBe(loanNumber);
-      
+
       flush();
     }));
 
